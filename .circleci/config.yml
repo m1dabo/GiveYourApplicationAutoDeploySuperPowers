@@ -94,7 +94,8 @@ jobs:
             cd backend
             npm install
             npm test
-            
+
+# !!!          
 #   scan-frontend:
 #     docker:
 #       # Docker image here
