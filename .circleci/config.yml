@@ -131,7 +131,11 @@ jobs:
       - image: cimg/base::stable
     steps:
       - checkout
-      - Install_AWS_CLI
+      - run:
+          name: Install AWS CLI
+          command: |
+            apk --no-cache add py-pip
+             pip install awscli
       - run:
           name: Ensure infrastructure back-end exists
           command: |
