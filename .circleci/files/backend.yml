@@ -9,7 +9,7 @@ Parameters:
 Resources:
   InstanceSecurityGroup:
   # intentional error to take screenshot 05
-    Type: AWS::EC2::SecurityGroup
+    Type: AWS::EC2::SecurityGroupasdgrp
     Properties:
       GroupName: !Sub UdaPeople-${ID}
       GroupDescription: Allow port 22 and port 3030.
