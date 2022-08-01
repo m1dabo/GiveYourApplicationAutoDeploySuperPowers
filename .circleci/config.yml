@@ -1,7 +1,7 @@
 version: 2.1
 
 commands:
-    install_awscli:
+    awscli-installing:
       description: Install AWS CLI v2
       steps:
         - run:
@@ -11,18 +11,18 @@ commands:
               unzip awscliv2.zip
               sudo ./aws/install
 
-    install_ansible:
-      description: Install Ansible v2
+    ansible-installing:
+      description: Install Ansible latest
       steps:
         - run: 
-            name: Install Ansible v2
+            name: Install Ansible latest
             command: |
               sudo apt update
-              sudo apt install software-properties-common
+              sudo apt install software-properties-common -y
               sudo add-apt-repository --yes --update ppa:ansible/ansible
-              sudo apt install ansible
+              sudo apt install ansible -y
 
-    destroy-environment:
+    environment-destroying:
       description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
       parameters:
         Workflow_ID:
@@ -37,7 +37,7 @@ commands:
               aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
               aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
 
-    revert-migrations:
+    migrations-reverting:
       description: Revert the last migration if successfully run in the current workflow.
       parameters:
         Workflow_ID:
@@ -55,6 +55,15 @@ commands:
                 npm install
                 npm run migration:revert
               fi
+
+    nodejs-installing:
+      description: Install nodeJS V13
+      steps:
+        - run:
+            name: Install nodeJS V13
+            command: |
+              curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+              sudo apt install -y nodejs
             
 jobs:
   build-frontend:
@@ -155,7 +164,7 @@ jobs:
       - image: cimg/base:2022.07
     steps:
       - checkout
-      - install_awscli
+      - awscli-installing
       - run:
           name: Ensure infrastructure back-end exists
           command: |
@@ -189,14 +198,14 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
 
-      - destroy-environment
+      - environment-destroying
 
   configure-infrastructure:
     docker:
       - image: cimg/base:2022.07
     steps:
       - checkout
-      - install_ansible
+      - ansible-installing
       - add_ssh_keys:
           fingerprints: ["d7:24:79:54:12:77:7d:2c:35:6b:1a:90:2b:0b:92:4f"]
       - attach_workspace:
@@ -209,14 +218,14 @@ jobs:
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
 
-      - destroy-environment
+      - environment-destroying
 
   run-migrations:
     docker:
       - image: cimg/node:13.8.0
     steps:
       - checkout
-      - install_awscli
+      - awscli-installing
           
       - run:
           name: Run migrations
@@ -231,49 +240,69 @@ jobs:
             then
               curl https://kvdb.io/${KVDB_BUCKET_ID}/migration_${CIRCLE_WORKFLOW_ID:0:7} -d 'dabo'
             fi
-      - destroy-environment
-      - revert-migrations
+      - environment-destroying
+      - migrations-reverting
             
                  
 
-#   deploy-frontend:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Get backend url
-#           command: |
-#             # your code here
-#             export API_URL="http://${BACKEND_IP}:3030"
-#             echo "${API_URL}"
-#       - run:
-#           name: Deploy frontend objects
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure      
-                    
-#   deploy-backend:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Deploy backend
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure  
+  deploy-frontend:
+    docker:
+      - image: cimg/base:2022.07
+    steps:
+      - checkout
+      - awscli-installing
+      - nodejs-installing
+      - restore_cache:
+          keys: [frontend-deps]
+      - run:
+          name: Install dependencies
+          command: |
+            cd frontend
+            npm install
+      - run:
+          name: Get backend url
+          command: |
+            BACKEND_PUBLIC_IP=$(aws ec2 descripe-instances \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output text)
 
+            echo API_URL="http://${BACKEND_PUBLIC_IP}:3030" >> frontend/.env
+            cat frontend/.env
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm run build
+            aws s3 cp dist s3://dabo-udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+
+      - environment-destroying
+      - migrations-reverting
+            
+  deploy-backend:
+    docker:
+      - image: cimg/base:2022.07
+    steps:
+      - checkout
+      - awscli-installing
+      - nodejs-installing
+      - ansible-installing
+      - add_ssh_keys:
+          fingerprints: [""]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            cd backend
+            npm install
+      - run:
+          name: Deploy backend
+          command: |
+            # commands here
+
+      - environment-destroying
+      - migrations-reverting
 #   smoke-test:
 #     docker:
 #       # Lightweight Docker image 
@@ -354,10 +383,10 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
-      # - deploy-frontend:
-      #     requires: [run-migrations]
-      # - deploy-backend:
-      #     requires: [run-migrations]
+      - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
