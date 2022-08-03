@@ -226,7 +226,6 @@ jobs:
     steps:
       - checkout
       - awscli-installing
-          
       - run:
           name: Run migrations
           command: |
