@@ -332,6 +332,7 @@ jobs:
             else
               exit 3
             fi
+            
       - environment-destroying
       - migrations-reverting
 #   cloudfront-update:
