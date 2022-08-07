@@ -378,6 +378,7 @@ jobs:
               --stack-name InitialStack
       - environment-destroying
       - migrations-reverting
+      
 # cleanup:
 #     docker:
 #       # Docker image here
