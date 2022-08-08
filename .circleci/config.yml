@@ -182,7 +182,7 @@ jobs:
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
               
       - run:
           name: Add ip of back-end to ansible inventory
@@ -272,7 +272,7 @@ jobs:
           command: |
             cd frontend
             npm run build
-            aws s3 cp dist s3://udapeople-532806378793 --recursive
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
 
       - environment-destroying
       - migrations-reverting
@@ -344,7 +344,7 @@ jobs:
       - run:
           name: Smoke Test Frontend.
           command: |
-            FRONTEND_WEBSITE=https://udapeople-532806378793.s3.amazonaws.com/index.html
+            FRONTEND_WEBSITE=https://udapeople-{CIRCLE_WORKFLOW_ID:0:7}.s3-website.${AWS_DEFAULT_REGION}.amazonaws.com
             if curl -s $FRONTEND_WEBSITE | grep "Welcome"
             then
               exit 0
