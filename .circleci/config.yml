@@ -1,5 +1,4 @@
 version: 2.1
-
 commands:
 #installing aws cli command
     awscli-installing:
