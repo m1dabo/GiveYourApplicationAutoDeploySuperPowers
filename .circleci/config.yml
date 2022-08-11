@@ -402,8 +402,7 @@ jobs:
               aws s3 rm "s3://udapeople-${MyWorkFlowID}" --recursive
               aws cloudformation delete-stack --stack-name "udapeople-backend-${MyWorkFlowID}"
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${MyWorkFlowID}"
-            fi
-            
+            fi        
 
 workflows:
   default:
