@@ -379,7 +379,7 @@ jobs:
       - environment-destroying
       - migrations-reverting
       
-cleanup:
+  cleanup:
     docker:
       - image: cimg/base:2022.07
     steps:
@@ -403,11 +403,6 @@ cleanup:
               aws cloudformation delete-stack --stack-name "udapeople-backend-${MyWorkFlowID}"
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${MyWorkFlowID}"
             fi
-      - run:
-          name: Remove old stacks and files
-          command: |
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-
             
 
 workflows:
