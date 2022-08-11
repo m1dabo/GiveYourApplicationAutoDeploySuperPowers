@@ -242,7 +242,6 @@ jobs:
             fi
       - environment-destroying
       - migrations-reverting             
-
   deploy-frontend:
     docker:
       - image: cimg/base:2022.07
@@ -351,7 +350,6 @@ jobs:
             else
               exit 1
             fi   
-                 
       # - environment-destroying
       # - migrations-reverting
 
