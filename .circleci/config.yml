@@ -242,7 +242,7 @@ jobs:
             fi
       - environment-destroying
       - migrations-reverting    
-               
+
   deploy-frontend:
     docker:
       - image: cimg/base:2022.07
@@ -351,9 +351,8 @@ jobs:
             else
               exit 1
             fi   
-
-      # - environment-destroying
-      # - migrations-reverting
+      - environment-destroying
+      - migrations-reverting
 
   cloudfront-update:
     docker:
@@ -380,24 +379,35 @@ jobs:
       - environment-destroying
       - migrations-reverting
       
-# cleanup:
-#     docker:
-#       # Docker image here
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Get old stack workflow id
-#           command: |
-#             # your code here
-#             export OldWorkflowID="the id here"
-#             export STACKS=[] #put the list of stacks here
-#       - run:
-#           name: Remove old stacks and files
-#           command: |
-#             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-#             then
-#               # your code here
-#             fi
+cleanup:
+    docker:
+      - image: cimg/base:2022.07
+    steps:
+      - checkout
+      - awscli-installing
+      - nodejs-installing
+      - run:
+          name: removing all stacks created before
+          command: |
+            export STACKS=($(aws cloudformation list-stacks \
+                --query "StackSummaries[*].StackName" \
+                --stack-status-filter CREATE-COMPLETE --no-paginate --output text))
+            echo Stack names: "${STACKS[@]}"
+
+            export MyWorkFlowID=$(curl --insecure https://kvdb.io/${KVDB_BUCKET_ID}/my_workflow_id)
+            echo My Workflow ID: $MyWorkFlowID
+
+            if [[ "${STACKS[@]}" =~ "${MyWorkFlowID}" ]]
+            then
+              aws s3 rm "s3://udapeople-${MyWorkFlowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${MyWorkFlowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${MyWorkFlowID}"
+            fi
+      - run:
+          name: Remove old stacks and files
+          command: |
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+
             
 
 workflows:
@@ -430,5 +440,5 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
-      # - cleanup:
-      #     requires: [cloudfront-update]
+      - cleanup:
+          requires: [cloudfront-update]
