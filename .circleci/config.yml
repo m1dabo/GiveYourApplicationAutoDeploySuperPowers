@@ -174,7 +174,6 @@ jobs:
               --tags project=udapeople \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
-
       - run:
           name: Ensure infrastructure front-end exist
           command: |
@@ -182,8 +181,7 @@ jobs:
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"
-              
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"       
       - run:
           name: Add ip of back-end to ansible inventory
           command: |
@@ -193,12 +191,10 @@ jobs:
             --output text)
             echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
-
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-
       - environment-destroying
 
   configure-infrastructure:
@@ -211,14 +207,12 @@ jobs:
           fingerprints: ["d7:24:79:54:12:77:7d:2c:35:6b:1a:90:2b:0b:92:4f"]
       - attach_workspace:
           at: ~/
-
       - run:
           name: Configure server
           command: |
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
-
       - environment-destroying
 
   run-migrations:
@@ -273,10 +267,9 @@ jobs:
             cd frontend
             npm run build
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID} --recursive
-
       - environment-destroying
       - migrations-reverting
-            
+
   deploy-backend:
     docker:
       - image: cimg/base:2022.07
