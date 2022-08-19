@@ -1,0 +1,4 @@
+[URL01]: https://github.com/m1dabo/GiveYourApplicationAutoDeploySuperPowers
+[URL02]:http://udapeople-19ca074.s3.amazonaws.com/index.html#/employees
+[CloudFront domain name URL]: http://d1qyc7fue0xrth.cloudfront.net/#/employees
+[BackEndURL] : http://54.91.3.26:3030/api/status
